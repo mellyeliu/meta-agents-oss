@@ -1,3 +1,78 @@
+// Browser mock for window.electronAPI — allows the renderer to run in a browser
+// (outside Electron) for development/preview purposes.
+if (typeof window !== 'undefined' && !window.electronAPI) {
+  const noop = () => Promise.resolve(undefined as any)
+  const noopListener = () => () => {}
+  ;(window as any).electronAPI = new Proxy({}, {
+    get(_target, prop) {
+      // Methods that need specific return values
+      const overrides: Record<string, any> = {
+        isDebugMode: () => Promise.resolve(false),
+        getWindowWorkspace: () => Promise.resolve('demo-workspace'),
+        getWorkspaces: () => Promise.resolve([{ id: 'demo-workspace', name: 'Demo', rootPath: '/' }]),
+        getSessions: () => Promise.resolve([]),
+        getSetupNeeds: () => Promise.resolve({ needsBillingConfig: false, needsCredentials: false, isFullyConfigured: true }),
+        getVersions: () => ({ node: '0', chrome: '0', electron: '0' }),
+        getSystemTheme: () => Promise.resolve(window.matchMedia('(prefers-color-scheme: dark)').matches),
+        getAppTheme: () => Promise.resolve(null),
+        getAllDrafts: () => Promise.resolve({}),
+        getNotificationsEnabled: () => Promise.resolve(false),
+        listLlmConnectionsWithStatus: () => Promise.resolve([]),
+        getWindowFocusState: () => Promise.resolve(true),
+        getWorkspaceSettings: () => Promise.resolve(null),
+        listStatuses: () => Promise.resolve([]),
+        listLabels: () => Promise.resolve([]),
+        listViews: () => Promise.resolve([]),
+        getSources: () => Promise.resolve([]),
+        getSkills: () => Promise.resolve([]),
+        getWindowMode: () => Promise.resolve('main'),
+        getAutoCapitalisation: () => Promise.resolve(true),
+        getSendMessageKey: () => Promise.resolve('enter'),
+        getSpellCheck: () => Promise.resolve(true),
+        getKeepAwakeWhileRunning: () => Promise.resolve(false),
+        getColorTheme: () => Promise.resolve('default'),
+        loadPresetThemes: () => Promise.resolve([]),
+        getToolIconMappings: () => Promise.resolve({}),
+        readPreferences: () => Promise.resolve(''),
+        getUpdateInfo: () => Promise.resolve(null),
+        getDismissedUpdateVersion: () => Promise.resolve(null),
+        getCredentialHealth: () => Promise.resolve({ healthy: true }),
+        hasClaudeOAuthState: () => Promise.resolve(false),
+        checkGitBash: () => Promise.resolve({ found: true }),
+        getGitBranch: () => Promise.resolve(null),
+        searchSessionContent: () => Promise.resolve([]),
+        // Event listeners return cleanup functions
+        onSessionEvent: noopListener,
+        onSystemThemeChange: noopListener,
+        onAppThemeChange: noopListener,
+        onMenuNewChat: noopListener,
+        onMenuOpenSettings: noopListener,
+        onMenuKeyboardShortcuts: noopListener,
+        onMenuToggleFocusMode: noopListener,
+        onMenuToggleSidebar: noopListener,
+        onDeepLinkNavigate: noopListener,
+        onCloseRequested: noopListener,
+        onSourcesChanged: noopListener,
+        onSkillsChanged: noopListener,
+        onStatusesChanged: noopListener,
+        onLabelsChanged: noopListener,
+        onUpdateAvailable: noopListener,
+        onUpdateDownloadProgress: noopListener,
+        onBadgeDraw: noopListener,
+        onWindowFocusChange: noopListener,
+        onNotificationNavigate: noopListener,
+        onThemePreferencesChange: noopListener,
+        onWorkspaceThemeChange: noopListener,
+        onDefaultPermissionsChanged: noopListener,
+        onSessionFilesChanged: noopListener,
+      }
+      if (prop in overrides) return overrides[prop as string]
+      // Default: return noop for any unknown method
+      return noop
+    }
+  })
+}
+
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
